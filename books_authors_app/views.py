@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 from .models import Author, Book
 
 def index(request):
@@ -26,32 +26,30 @@ def new_book(request):
 def book_view(request,id_book):
     book=Book.objects.get(id=id_book)
     authors=Author.objects.all().filter(books=book)
-    all_authors=Author.objects.all()
-
+    #all_authors=Author.objects.all()
+    no_authors=[Aut for Aut in Author.objects.all() if Aut not in authors]
     context = { 
                 'book':book,
                 'authors_of_book':authors,
-                'all_authors':all_authors
+                'all_authors':no_authors
             }
     return render(request, 'view_book.html', context)
 
-def add_author(request):
+def add_author(request,book_id):
     if request.method == "POST":
-        
-        libro=request.POST['book']
-        book=Book.objects.get(id=libro)        
-        autor=Author.objects.get(id=author_id)
-        book.authors.add(autor)
-        books=Book.objects.all().filter(authors=autor)
-        no_books=[Lib for Lib in Book.objects.all() if Lib not in books]
-        #all_books=Book.objects.all()
-
+        book=Book.objects.get(id=book_id)  
+        author_id=request.POST['author_id']
+        author=Author.objects.get(id=author_id)
+        author.books.add(book)
+        authors=Author.objects.all().filter(books=book)
+        no_authors=[Aut for Aut in Author.objects.all() if Aut not in authors]
         context = { 
-                    'author':autor,
-                    'books_of_author':books,
-                    'all_books':no_books
+                    'book':book,
+                'authors_of_book':authors,
+                'all_authors':no_authors
                 }
-        return render(request, 'view_authors.html', context)
+        return render(request, 'view_book.html', context)
+
 
 
 def authors(request):
@@ -103,3 +101,8 @@ def add_book(request,author_id):
                 }
         return render(request, 'view_authors.html', context)
 
+def delete(request,author_id,book_id):
+    author = Author.objects.get(id=int(author_id))
+    book = Book.objects.get(id=int(book_id))
+    author.books.remove(book)
+    return redirect(request.META.get('HTTP_REFERER'))
